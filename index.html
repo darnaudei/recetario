@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recetario de la Familia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+/* Layout: cabecera sobria, buscador + filtros, rejilla de fichas; cada receta abre su propia vista (#slug) */
+:root {
+  --paper: #f6f7f2;
+  --card: #ffffff;
+  --ink: #263023;
+  --muted: #66715f;
+  --line: #dde2d4;
+  --accent: #3f6b3a;
+  --saffron: #d99a1e;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Source Serif 4", Georgia, "Times New Roman", serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #151a14; --card: #1d241b; --ink: #e8ecdf; --muted: #9faa96;
+    --line: #2f392c; --accent: #8fc283; --saffron: #f0b847; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #151a14; --card: #1d241b; --ink: #e8ecdf; --muted: #9faa96;
+  --line: #2f392c; --accent: #8fc283; --saffron: #f0b847; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--paper); color: var(--ink); font: 400 1.0625rem/1.6 var(--body); }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+header.top { border-bottom: 1px solid var(--line); padding: 32px 0 24px; }
+header.top h1 { font: 700 clamp(2rem, 5vw, 2.9rem)/1.05 var(--display); margin: 0; letter-spacing: -0.02em; text-wrap: balance; }
+header.top h1 a { color: inherit; text-decoration: none; }
+header.top p { margin: 6px 0 0; color: var(--muted); }
+.tools { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 24px 0 8px; }
+.tools input { flex: 1 1 260px; font: inherit; padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font: 500 0.875rem var(--display); padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+:focus-visible { outline: 3px solid var(--saffron); outline-offset: 2px; }
+.count { color: var(--muted); font: 500 0.875rem var(--display); padding: 8px 0 16px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; padding-bottom: 48px; }
+.card { display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: inherit; background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: 18px 20px; }
+.card:hover { border-left-color: var(--saffron); }
+.card h2 { font: 700 1.3rem/1.2 var(--display); margin: 0; text-wrap: balance; }
+.card p { margin: 0; color: var(--muted); font-size: 0.975rem; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font: 500 0.825rem var(--display); color: var(--muted); font-variant-numeric: tabular-nums; }
+.meta b { color: var(--ink); font-weight: 600; }
+.tag { font: 600 0.72rem var(--display); text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); }
+.ejemplo { font: 600 0.72rem var(--display); text-transform: uppercase; letter-spacing: 0.06em; color: var(--saffron); }
+.empty { padding: 32px 0; color: var(--muted); }
+/* Vista de receta */
+.recipe { padding: 28px 0 64px; }
+.back { font: 500 0.95rem var(--display); color: var(--accent); text-decoration: none; }
+.recipe h2 { font: 700 clamp(1.9rem, 4.5vw, 2.6rem)/1.1 var(--display); margin: 14px 0 8px; text-wrap: balance; }
+.recipe .intro { max-width: 65ch; color: var(--muted); margin: 0 0 16px; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0 28px; }
+.fact { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px 16px; min-width: 120px; }
+.fact span { display: block; font: 500 0.75rem var(--display); color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.fact strong { font: 700 1.1rem var(--display); font-variant-numeric: tabular-nums; }
+.cols { display: grid; grid-template-columns: minmax(240px, 1fr) 2fr; gap: 32px; }
+@media (max-width: 720px) { .cols { grid-template-columns: 1fr; } }
+.cols h3 { font: 700 1.1rem var(--display); margin: 0 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--saffron); display: inline-block; }
+.ingr { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+.ingr label { display: flex; gap: 10px; align-items: baseline; cursor: pointer; }
+.ingr input { accent-color: var(--accent); }
+.ingr input:checked + span { text-decoration: line-through; color: var(--muted); }
+.steps { margin: 0; padding-left: 1.4em; display: grid; gap: 12px; max-width: 65ch; }
+.steps li::marker { font: 700 1rem var(--display); color: var(--accent); }
+.note { margin-top: 28px; max-width: 65ch; background: var(--card); border: 1px dashed var(--saffron); border-radius: 8px; padding: 14px 18px; }
+.note b { font-family: var(--display); }
+footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 0.9rem; padding: 18px 0 32px; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <h1><a href="#">Recetario de la Familia</a></h1>
+    <p>Las recetas de casa, para que nadie tenga que volver a llamar para preguntar cuánto arroz lleva.</p>
+  </div>
+</header>
+
+<main class="wrap" id="app"></main>
+
+<footer><div class="wrap">Recetas añadidas por la familia. Marca los ingredientes según los vayas preparando.</div></footer>
+
+<script>
+/* ===== RECETAS ===== Cada receta nueva se añade aquí. */
+const RECETAS = [
+  {
+    id: "pollo-en-salsa-de-verduras",
+    titulo: "Pollo en salsa de verduras",
+    categoria: "Platos principales",
+    intro: "Pollo guisado en una salsa hecha con las propias verduras pochadas y trituradas.",
+    tiempo: "Hasta que el pollo esté tierno",
+    ingredientes: [
+      "Pollo",
+      "1 cebolla",
+      "Un poco de ajo",
+      "Un poco de puerro",
+      "Un chorrito de vino",
+      "1 o 2 vasos de caldo",
+      "Aceite"
+    ],
+    pasos: [
+      "Corta la cebolla finita y pícala junto con el ajo y el puerro.",
+      "Pocha las verduras en aceite a fuego suave hasta que estén blandas.",
+      "Saca las verduras y tritúralas con la túrmix. Reserva el aceite en la sartén.",
+      "En ese mismo aceite, refríe el pollo hasta que se dore.",
+      "Añade el vino para desglasar, rascando el fondo, y deja que se evapore.",
+      "Incorpora las verduras trituradas y uno o dos vasos de caldo, según la cantidad de salsa que quieras.",
+      "Deja cocinar a fuego medio-bajo hasta que el pollo esté tierno."
+    ],
+    nota: "Ajusta el caldo a ojo: un vaso si quieres la salsa espesa, dos si te gusta más caldosa."
+  }
+];
+/* ===== FIN RECETAS ===== */
+
+const app = document.getElementById("app");
+let filtro = "Todas", busqueda = "";
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const norm = s => String(s ?? "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
+function lista() {
+  const cats = ["Todas", ...new Set(RECETAS.map(r => r.categoria))];
+  app.innerHTML = `
+    <div class="tools">
+      <label for="q" class="tag" style="position:absolute;left:-9999px">Buscar receta</label>
+      <input id="q" type="search" placeholder="Buscar por nombre o ingrediente…" value="${esc(busqueda)}">
+      <div class="chips" role="group" aria-label="Categorías">
+        ${cats.map(c => `<button class="chip" type="button" data-cat="${esc(c)}" aria-pressed="${c === filtro}">${esc(c)}</button>`).join("")}
+      </div>
+    </div>
+    <div class="count" id="count"></div>
+    <div class="grid" id="grid"></div>`;
+  document.getElementById("q").addEventListener("input", e => { busqueda = e.target.value; pintar(); });
+  app.querySelectorAll(".chip").forEach(b => b.addEventListener("click", () => {
+    filtro = b.dataset.cat;
+    app.querySelectorAll(".chip").forEach(x => x.setAttribute("aria-pressed", x === b));
+    pintar();
+  }));
+  pintar();
+}
+
+function pintar() {
+  const q = norm(busqueda);
+  const rs = RECETAS.filter(r => (filtro === "Todas" || r.categoria === filtro) &&
+    (!q || norm([r.titulo, r.intro, r.autor, ...(r.ingredientes || [])].join(" ")).includes(q)))
+    .sort((a, b) => a.titulo.localeCompare(b.titulo, "es"));
+  document.getElementById("count").textContent = rs.length === 1 ? "1 receta" : `${rs.length} recetas`;
+  document.getElementById("grid").innerHTML = rs.length ? rs.map(r => `
+    <a class="card" href="#${esc(r.id)}">
+      ${r.ejemplo ? `<span class="ejemplo">Ejemplo</span>` : `<span class="tag">${esc(r.categoria)}</span>`}
+      <h2>${esc(r.titulo)}</h2>
+      ${r.intro ? `<p>${esc(r.intro)}</p>` : ""}
+      <div class="meta">
+        ${r.tiempo ? `<span><b>${esc(r.tiempo)}</b></span>` : ""}
+        ${r.raciones ? `<span>${esc(r.raciones)}</span>` : ""}
+        ${r.autor ? `<span>De ${esc(r.autor)}</span>` : ""}
+      </div>
+    </a>`).join("") : `<p class="empty">No hay recetas que coincidan. Prueba con otra palabra.</p>`;
+}
+
+function receta(r) {
+  const facts = [["Tiempo", r.tiempo], ["Raciones", r.raciones], ["Dificultad", r.dificultad], ["De", r.autor]].filter(f => f[1]);
+  app.innerHTML = `
+    <article class="recipe">
+      <a class="back" href="#">← Todas las recetas</a>
+      <h2>${esc(r.titulo)}</h2>
+      ${r.ejemplo ? `<span class="ejemplo">Receta de ejemplo</span>` : `<span class="tag">${esc(r.categoria)}</span>`}
+      ${r.intro ? `<p class="intro">${esc(r.intro)}</p>` : ""}
+      <div class="facts">${facts.map(([k, v]) => `<div class="fact"><span>${k}</span><strong>${esc(v)}</strong></div>`).join("")}</div>
+      <div class="cols">
+        <section><h3>Ingredientes</h3>
+          <ul class="ingr">${(r.ingredientes || []).map((i, n) => `<li><label for="i${n}"><input type="checkbox" id="i${n}"><span>${esc(i)}</span></label></li>`).join("")}</ul>
+        </section>
+        <section><h3>Preparación</h3>
+          <ol class="steps">${(r.pasos || []).map(p => `<li>${esc(p)}</li>`).join("")}</ol>
+          ${r.nota ? `<div class="note"><b>Truco de casa:</b> ${esc(r.nota)}</div>` : ""}
+        </section>
+      </div>
+    </article>`;
+  window.scrollTo(0, 0);
+}
+
+function ruta() {
+  const id = location.hash.slice(1);
+  const r = RECETAS.find(x => x.id === id);
+  r ? receta(r) : lista();
+}
+window.addEventListener("hashchange", ruta);
+ruta();
+</script>
+</body>
+</html>
