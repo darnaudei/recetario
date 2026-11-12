@@ -71,6 +71,8 @@ header.top p { margin: 6px 0 0; color: var(--muted); }
 .ingr { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
 .ingr label { display: flex; gap: 10px; align-items: baseline; cursor: pointer; }
 .ingr input { accent-color: var(--accent); }
+.ingr .grupo { font: 600 0.8rem var(--display); text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-top: 10px; }
+.ingr .grupo:first-child { margin-top: 0; }
 .ingr input:checked + span { text-decoration: line-through; color: var(--muted); }
 .steps { margin: 0; padding-left: 1.4em; display: grid; gap: 12px; max-width: 65ch; }
 .steps li::marker { font: 700 1rem var(--display); color: var(--accent); }
@@ -119,6 +121,35 @@ const RECETAS = [
       "Deja cocinar a fuego medio-bajo hasta que el pollo esté tierno."
     ],
     nota: "Ajusta el caldo a ojo: un vaso si quieres la salsa espesa, dos si te gusta más caldosa."
+  },
+  {
+    id: "ensalada-san-ignacio",
+    titulo: "Ensalada San Ignacio",
+    categoria: "Ensaladas",
+    intro: "Ensalada fresca de lechuga, aguacate y encurtidos con un aliño de mostaza de Dijon agitado en biberón.",
+    ingredientes: [
+      "# Para la ensalada",
+      "Lechuga",
+      "Aguacate",
+      "Tomatitos cherry",
+      "Pepinillos en vinagre",
+      "Mazorquitas de maíz",
+      "# Para el aliño",
+      "Un buen chorreón de aceite de oliva",
+      "1 cucharada de mostaza de Dijon",
+      "1 cucharadita de azúcar",
+      "Vinagre",
+      "Sal",
+      "Pimienta (opcional)"
+    ],
+    pasos: [
+      "Corta la lechuga, el aguacate, los tomatitos cherry, los pepinillos y las mazorquitas en trozos pequeños.",
+      "Junta todo en una ensaladera.",
+      "Para el aliño, mete en un biberón el aceite, la mostaza, el azúcar, el vinagre, la sal y, si quieres, un poco de pimienta.",
+      "Cierra el biberón y agítalo bien hasta que la salsa quede homogénea.",
+      "Añade el aliño a la ensalada justo antes de servir, y lista."
+    ],
+    nota: "El biberón es el truco: al agitarlo, la mostaza liga el aceite y el vinagre y el aliño queda cremoso."
   }
 ];
 /* ===== FIN RECETAS ===== */
@@ -179,7 +210,9 @@ function receta(r) {
       <div class="facts">${facts.map(([k, v]) => `<div class="fact"><span>${k}</span><strong>${esc(v)}</strong></div>`).join("")}</div>
       <div class="cols">
         <section><h3>Ingredientes</h3>
-          <ul class="ingr">${(r.ingredientes || []).map((i, n) => `<li><label for="i${n}"><input type="checkbox" id="i${n}"><span>${esc(i)}</span></label></li>`).join("")}</ul>
+          <ul class="ingr">${(r.ingredientes || []).map((i, n) => i.startsWith("# ")
+            ? `<li class="grupo">${esc(i.slice(2))}</li>`
+            : `<li><label for="i${n}"><input type="checkbox" id="i${n}"><span>${esc(i)}</span></label></li>`).join("")}</ul>
         </section>
         <section><h3>Preparación</h3>
           <ol class="steps">${(r.pasos || []).map(p => `<li>${esc(p)}</li>`).join("")}</ol>
